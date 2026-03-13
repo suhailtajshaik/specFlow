@@ -1,40 +1,14 @@
 {
-  "name": "specflow",
-  "version": "0.1.0",
-  "description": "Generate production TypeScript backends from markdown specifications",
-  "type": "module",
-  "bin": {
-    "specflow": "./dist/cli/index.js"
-  },
+  "name": "specflow-workspace",
+  "private": true,
+  "workspaces": ["packages/*"],
   "scripts": {
-    "build": "tsc && echo '#!/usr/bin/env node' | cat - dist/cli/index.js > dist/cli/index.tmp && mv dist/cli/index.tmp dist/cli/index.js && chmod +x dist/cli/index.js",
-    "dev": "tsx src/cli/index.ts",
-    "prepublishOnly": "npm run build"
-  },
-  "keywords": ["cli", "backend", "generator", "llm", "typescript", "api", "specflow"],
-  "author": "Suhail Taj <suhailtajshaik@gmail.com>",
-  "license": "MIT",
-  "dependencies": {
-    "@anthropic-ai/sdk": "latest",
-    "@google/generative-ai": "latest",
-    "chalk": "^5.3.0",
-    "commander": "^12.0.0",
-    "gray-matter": "^4.0.3",
-    "handlebars": "^4.7.8",
-    "inquirer": "^9.2.0",
-    "openai": "^4.0.0",
-    "ora": "^8.0.0",
-    "glob": "^10.0.0",
-    "yaml": "^2.4.0",
-    "json-schema-to-zod": "^2.0.0"
+    "build": "npm run build --workspace=packages/core && npm run build --workspace=packages/cli",
+    "clean": "npm run clean --workspace=packages/core && npm run clean --workspace=packages/cli",
+    "dev:core": "npm run dev --workspace=packages/core",
+    "dev:cli": "npm run dev --workspace=packages/cli"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@types/inquirer": "^9.0.0",
-    "typescript": "^5.4.0",
-    "tsx": "^4.7.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "typescript": "^5.4.0"
   }
 }

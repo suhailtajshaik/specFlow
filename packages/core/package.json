@@ -1,0 +1,36 @@
+{
+  "name": "@specflow/core",
+  "version": "0.1.0",
+  "description": "SpecFlow SDK — generate production backends from specifications",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest",
+    "@google/generative-ai": "latest",
+    "openai": "^4.0.0",
+    "gray-matter": "^4.0.3",
+    "glob": "^10.0.0",
+    "yaml": "^2.4.0",
+    "handlebars": "^4.7.8",
+    "json-schema-to-zod": "^2.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0"
+  },
+  "license": "MIT",
+  "author": "Suhail Taj <suhailtajshaik@gmail.com>"
+}
