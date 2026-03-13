@@ -209,8 +209,27 @@ export class SpecFlow {
    * Scan an existing project and generate specs from its codebase.
    */
   async scan(options: ScanOptions): Promise<ScanResult> {
-    // Implementation will use the scanner module
-    throw new Error('scan() not yet implemented — coming in next release');
+    const provider = await this.ensureProvider();
+    const { ProjectScanner } = await import('./scanner/index.js');
+    const { SpecWriter } = await import('./scanner/spec-writer.js');
+    
+    const scanner = new ProjectScanner(provider);
+    const scanResult = await scanner.scan(options.projectDir, options.language);
+    
+    // Generate spec files from scan results
+    const specWriter = new SpecWriter(provider);
+    const outputDir = options.outputDir || join(this.cwd, this.config.requirements.directory);
+    const specsGenerated = await specWriter.writeSpecs(scanResult, outputDir);
+    
+    return {
+      endpoints: scanResult.endpoints.map(e => ({
+        method: e.method,
+        path: e.path,
+        description: e.description || ''
+      })),
+      specsGenerated,
+      language: scanResult.language
+    };
   }
 
   /**
