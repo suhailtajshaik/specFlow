@@ -46,4 +46,4 @@ coverage/
 requirements/.specflow-prepared
 
 # TypeScript
-*.tsbuildinfo
+*.tsbuildinfonode_modules
