@@ -45,7 +45,7 @@ export class ProjectScanner {
   constructor(private provider: LLMProvider) {}
 
   async scan(projectDir: string, language?: string): Promise<ScanResult> {
-    const detectedLanguage = language || await this.detectLanguage(projectDir);
+    const detectedLanguage = (language && language !== 'auto') ? language : await this.detectLanguage(projectDir);
     const dependencies = await this.getDependencies(projectDir, detectedLanguage);
     
     const parser = this.getLanguageParser(detectedLanguage);
