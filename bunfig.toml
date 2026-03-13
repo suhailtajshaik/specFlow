@@ -1,9 +1,5 @@
-[run]
-hot = true
-watch = true
+[install]
+optional = false
 
 [test]
-timeout = 30000
-
-[install]
-registry = "https://registry.npmjs.org"
+coverage = true

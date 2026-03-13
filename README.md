@@ -1,122 +1,225 @@
-# LLM Backend Framework
+# SpecFlow
 
-A generic, reusable backend engine where project teams write markdown files instead of code, and an LLM serves API requests.
+[![npm version](https://badge.fury.io/js/specflow.svg)](https://badge.fury.io/js/specflow)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Overview
+Generate production-ready TypeScript backends from markdown specifications using AI.
 
-This framework allows you to build backend APIs by writing markdown specification files instead of traditional code. The system uses RAG (Retrieval-Augmented Generation) to find relevant contract and business rule documents, then uses an LLM to process requests and generate responses.
+## 🚀 Quick Start
 
-## Architecture
-
-- **Gateway**: Bun + Hono API server with RAG pipeline
-- **MCP Servers**: Modular tools for database, HTTP, email, auth, and cache operations
-- **Build Pipeline**: Converts markdown specs into a vector database for retrieval
-- **Vector DB**: Qdrant for storing and searching embedded specifications
-
-## Quick Start
-
-1. **Clone and Install**:
 ```bash
-git clone <repo>
-cd llm-backend-framework
-bun install
+# Install globally
+npm install -g specflow
+
+# Or use with npx (no install needed)
+npx specflow init my-api --example
+cd my-api
+npx specflow prepare
+npx specflow generate
+npx specflow dev
 ```
 
-2. **Configure Environment**:
-```bash
-cp framework/docker/.env.example .env
-# Edit .env with your settings
-```
+## ✨ What is SpecFlow?
 
-3. **Start Development Stack**:
-```bash
-bun run dev
-# This starts the local profile with llamacpp
-```
+SpecFlow transforms your rough API ideas into production-ready TypeScript backends. Write your specs in plain English, bullet points, or incomplete markdown—SpecFlow's AI will transform them into professional documentation and generate working code.
 
-4. **Build Vector Index**:
-```bash
-bun run build:index
-```
+### The Magic: Prepare → Generate Pipeline
 
-5. **Test the API**:
-```bash
-curl -X POST http://localhost:3000/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email": "user@example.com", "password": "securepass123"}'
-```
+1. **Write rough specs** (bullet points, notes, anything!)
+2. **`specflow prepare`** — AI transforms them into professional requirements
+3. **`specflow generate`** — Creates production TypeScript backend
+4. **`specflow dev`** — Start coding!
 
-## Project Structure
+## 🏗️ What Gets Generated
 
-```
-llm-backend-framework/
-├── framework/          # Core framework components
-│   ├── gateway/        # API gateway with RAG pipeline
-│   ├── mcp-servers/    # Tool servers for various functions
-│   ├── build/          # Vector DB build pipeline
-│   └── docker/         # Docker configuration
-├── example/           # Example e-commerce API project
-└── README.md          # This file
-```
+Complete, production-ready backend with:
 
-## Writing Specifications
+- 🔥 **Bun runtime** for blazing fast performance
+- 🌐 **Hono web framework** lightweight and modern
+- 🛢️ **Drizzle ORM** with PostgreSQL
+- 🔒 **Zod validation** for request/response schemas
+- 🚀 **TypeScript** with strict types throughout
+- 🐳 **Docker** configuration included
+- 🛡️ **Security** middleware and rate limiting
+- ⚡ **Auto-generated** API routes with business logic
 
-### Business Requirements (*.req.md)
-Define business rules and logic:
+## 📋 Example Input → Output
 
+### Input (rough notes):
 ```markdown
----
-domain: auth
-type: requirement
-status: active
----
+# User Registration
 
-# User Registration Requirements
-
-## BR-1: Email Validation
-All user emails must be valid and unique...
-
-## BR-2: Password Strength
-Passwords must be at least 8 characters...
+Users should register with email and password
+- Validate emails are real
+- Hash passwords
+- Send verification email
+- No duplicate emails
 ```
 
-### API Contracts (*.contract.md)
-Define API endpoints and schemas:
+### Output (after `specflow prepare`):
+Professional `.req.md` and `.contract.md` files with:
+- Detailed business rules (BR-1, BR-2, etc.)
+- Complete JSON schemas
+- Error handling scenarios
+- Security considerations
 
-```markdown
----
-method: POST
-path: /api/v1/auth/register
-requires_auth: false
-rate_limit: 5/hour/ip
----
+### Generated Code:
+Production TypeScript with:
+- Hono route handlers implementing all business logic
+- Drizzle database schemas
+- Zod validation
+- Error handling
+- Authentication middleware
 
-# User Registration Endpoint
+## 🛠️ Commands
 
-Request schema: user.schema.json
-Response schema: registration-response.schema.json
+| Command | Description |
+|---------|-------------|
+| `specflow init [name]` | Initialize new project |
+| `specflow prepare` | Transform rough specs → professional docs |
+| `specflow generate` | Professional docs → TypeScript backend |
+| `specflow dev` | Generate + start development server |
+| `specflow list` | List all API endpoints |
+| `specflow setup` | Check installation and requirements |
+
+## 📁 Project Structure
+
+```
+my-api/
+├── requirements/              # Your specifications
+│   ├── business/             # Business requirements (.req.md)
+│   ├── technical/            # API contracts (.contract.md)
+│   └── schemas/              # Shared JSON schemas
+├── generated/                # Generated backend (after specflow generate)
+│   ├── src/
+│   │   ├── routes/          # API route handlers
+│   │   ├── schemas/         # Zod validation schemas
+│   │   ├── db/             # Database setup & migrations
+│   │   ├── middleware/     # Auth, CORS, rate limiting
+│   │   └── server.ts       # Main server
+│   ├── package.json
+│   ├── Dockerfile
+│   └── docker-compose.yml
+└── specflow.config.yaml      # SpecFlow configuration
 ```
 
-## Docker Profiles
+## ⚙️ Configuration
 
-- **default**: Gateway + Qdrant + MCP servers
-- **local**: + llamacpp server for local LLM
-- **vllm-cpu**: + vLLM CPU inference server
-- **vllm-gpu**: + vLLM GPU inference server (requires NVIDIA)
+Edit `specflow.config.yaml`:
 
-## Environment Variables
+```yaml
+# LLM Provider
+llm:
+  provider: "gemini"          # gemini | claude | llamacpp
+  apiKey: ""                  # or set via env vars
 
-See `framework/docker/.env.example` for all configuration options.
+# Generated code settings
+output:
+  directory: "./generated"
+  runtime: "bun"             
+  framework: "hono"          
+  orm: "drizzle"             
+  database: "postgresql"     
+  includeDocker: true        
 
-## MCP Servers
+# Requirements location
+requirements:
+  directory: "./requirements"
+  businessDir: "business"    
+  technicalDir: "technical"  
+  schemasDir: "schemas"      
+```
 
-The framework includes 5 MCP servers providing tools for:
-- **postgres**: Database operations
-- **http-api**: External HTTP calls
-- **email**: SMTP email sending
-- **auth**: Authentication utilities
-- **cache**: Redis caching
+## 🤖 LLM Providers
 
-## License
+### Google Gemini (Recommended)
+```bash
+# Free tier available
+export GEMINI_API_KEY=your_key_here
+# Get key: https://ai.google.dev
+```
 
-MIT
+### Anthropic Claude
+```bash
+export ANTHROPIC_API_KEY=your_key_here
+# Get key: https://console.anthropic.com
+```
+
+### Local LlamaCpp
+```bash
+export LLAMACPP_BASE_URL=http://localhost:8080/v1
+# Setup: https://github.com/ggerganov/llama.cpp
+```
+
+## 📦 Installation Requirements
+
+- **Node.js 18+** (for SpecFlow CLI)
+- **Bun 1.0+** (for generated code)
+
+SpecFlow will guide you through installation if anything is missing.
+
+## 💡 Examples
+
+### E-commerce API
+```bash
+npx specflow init shop-api --example
+cd shop-api
+npx specflow prepare  # Review the example specs
+npx specflow generate # Creates full e-commerce backend
+npx specflow dev      # Start development
+```
+
+### From Scratch
+```bash
+npx specflow init my-api
+cd my-api
+
+# Add your rough specs
+echo "# User Management
+- Users register with email/password
+- Users can login and get JWT tokens  
+- Users have profiles with name/avatar
+- Admin users can manage other users" > requirements/users.md
+
+npx specflow prepare  # AI creates professional specs
+npx specflow generate # Generates working backend
+```
+
+## 🏃‍♂️ Development Workflow
+
+1. **Start rough**: Write specs in plain English
+2. **Prepare**: `specflow prepare` makes them professional
+3. **Review**: Check generated `.req.md` and `.contract.md` files
+4. **Generate**: `specflow generate` creates backend code
+5. **Develop**: `specflow dev` starts the development server
+6. **Iterate**: Update specs and regenerate as needed
+
+## 🔧 Tech Stack
+
+| Component | Technology |
+|-----------|------------|
+| Runtime | Bun |
+| Framework | Hono |
+| Database | PostgreSQL |
+| ORM | Drizzle |
+| Validation | Zod |
+| Language | TypeScript |
+| Containerization | Docker |
+
+## 🤝 Contributing
+
+Contributions welcome! Please read our [Contributing Guide](CONTRIBUTING.md).
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- 📖 [Documentation](https://github.com/suhailtajshaik/specflow/wiki)
+- 🐛 [Issue Tracker](https://github.com/suhailtajshaik/specflow/issues)
+- 💬 [Discussions](https://github.com/suhailtajshaik/specflow/discussions)
+
+---
+
+**Built with ❤️ by [Suhail Taj](https://github.com/suhailtajshaik)**

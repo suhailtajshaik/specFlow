@@ -1,26 +1,40 @@
 {
-  "name": "llm-backend-framework",
-  "version": "1.0.0",
-  "description": "A generic, reusable backend engine where project teams write markdown files instead of code",
+  "name": "specflow",
+  "version": "0.1.0",
+  "description": "Generate production TypeScript backends from markdown specifications",
   "type": "module",
-  "workspaces": [
-    "framework/gateway",
-    "framework/mcp-servers/*",
-    "framework/build"
-  ],
+  "bin": {
+    "specflow": "./dist/cli/index.js"
+  },
   "scripts": {
-    "dev": "docker compose --profile local up",
-    "build": "bun run build:gateway && bun run build:mcp-servers",
-    "build:gateway": "cd framework/gateway && bun run build",
-    "build:mcp-servers": "cd framework/mcp-servers && for dir in */; do echo \"Building $dir\"; cd \"$dir\" && bun run build && cd ..; done",
-    "build:index": "cd framework/build && bun run build-index.ts",
-    "up": "docker compose up -d",
-    "down": "docker compose down",
-    "logs": "docker compose logs -f"
+    "build": "tsc && echo '#!/usr/bin/env node' | cat - dist/cli/index.js > dist/cli/index.tmp && mv dist/cli/index.tmp dist/cli/index.js && chmod +x dist/cli/index.js",
+    "dev": "tsx src/cli/index.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": ["cli", "backend", "generator", "llm", "typescript", "api", "specflow"],
+  "author": "Suhail Taj <suhailtajshaik@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest",
+    "@google/generative-ai": "latest",
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "gray-matter": "^4.0.3",
+    "handlebars": "^4.7.8",
+    "inquirer": "^9.2.0",
+    "openai": "^4.0.0",
+    "ora": "^8.0.0",
+    "glob": "^10.0.0",
+    "yaml": "^2.4.0",
+    "json-schema-to-zod": "^2.0.0"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2",
-    "bun-types": "^1.1.40",
-    "typescript": "^5.7.3"
+    "@types/node": "^20.0.0",
+    "@types/inquirer": "^9.0.0",
+    "typescript": "^5.4.0",
+    "tsx": "^4.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
