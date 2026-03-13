@@ -7,8 +7,24 @@ export class ZodCompiler {
   }
 
   private generateZodCode(schema: JsonSchema): string {
+    // Handle $ref references
+    if ((schema as any).$ref) {
+      // For now, treat $ref as unknown - in a full implementation,
+      // this would resolve the reference
+      return 'z.unknown()';
+    }
+    
     if (!schema.type) {
-      throw new Error('Schema must have a type property');
+      // If no type is specified, try to infer it or default to unknown
+      if (schema.properties) {
+        schema.type = 'object';
+      } else if (schema.items) {
+        schema.type = 'array';
+      } else if (schema.enum) {
+        schema.type = 'string';
+      } else {
+        return 'z.unknown()';
+      }
     }
 
     switch (schema.type) {

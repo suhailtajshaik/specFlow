@@ -13,14 +13,14 @@ export class ClaudeProvider implements LLMProvider {
     }
     
     this.client = new Anthropic({ apiKey: key });
-    this.model = model || 'claude-3-5-sonnet-20241022';
+    this.model = model || 'claude-sonnet-4-20250514';
   }
 
   async generate(systemPrompt: string, userPrompt: string): Promise<string> {
     try {
       const response = await this.client.messages.create({
         model: this.model,
-        max_tokens: 8192,
+        max_tokens: 16384,
         system: systemPrompt,
         messages: [
           {
