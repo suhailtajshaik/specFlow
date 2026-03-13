@@ -1,0 +1,24 @@
+{
+  "name": "@llm-framework/build",
+  "version": "1.0.0",
+  "description": "Vector DB build pipeline",
+  "type": "module",
+  "main": "build-index.ts",
+  "scripts": {
+    "build-index": "bun build-index.ts",
+    "dev": "bun --hot build-index.ts",
+    "build": "bun build build-index.ts --outdir=dist --target=bun"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.25.0",
+    "@qdrant/js-client": "^1.14.0",
+    "gray-matter": "^4.0.3",
+    "openai": "^4.77.0",
+    "tiktoken": "^1.0.19"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "bun-types": "^1.1.40",
+    "typescript": "^5.7.3"
+  }
+}

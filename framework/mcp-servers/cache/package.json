@@ -1,0 +1,21 @@
+{
+  "name": "@llm-framework/mcp-cache",
+  "version": "1.0.0",
+  "description": "Redis Cache MCP Server",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "bun --hot index.ts",
+    "start": "bun index.ts",
+    "build": "bun build index.ts --outdir=dist --target=bun"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.7",
+    "ioredis": "^5.4.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "bun-types": "^1.1.40",
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "llm-backend-framework",
+  "version": "1.0.0",
+  "description": "A generic, reusable backend engine where project teams write markdown files instead of code",
+  "type": "module",
+  "workspaces": [
+    "framework/gateway",
+    "framework/mcp-servers/*",
+    "framework/build"
+  ],
+  "scripts": {
+    "dev": "docker compose --profile local up",
+    "build": "bun run build:gateway && bun run build:mcp-servers",
+    "build:gateway": "cd framework/gateway && bun run build",
+    "build:mcp-servers": "cd framework/mcp-servers && for dir in */; do echo \"Building $dir\"; cd \"$dir\" && bun run build && cd ..; done",
+    "build:index": "cd framework/build && bun run build-index.ts",
+    "up": "docker compose up -d",
+    "down": "docker compose down",
+    "logs": "docker compose logs -f"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "bun-types": "^1.1.40",
+    "typescript": "^5.7.3"
+  }
+}
