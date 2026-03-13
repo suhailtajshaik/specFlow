@@ -2,8 +2,20 @@ import type { RoughInput, PrepareAnalysis, PrepareQuestion } from '../parser/typ
 import type { LLMProvider } from '../llm/provider.js';
 import { PREPARE_ANALYZE_PROMPT } from '../llm/prompts/prepare-analyze.js';
 
+export interface ExistingContext {
+  businessReqs: RoughInput[];
+  contracts: RoughInput[];
+  schemas: RoughInput[];
+}
+
 export class SpecAnalyzer {
+  private existingContext: ExistingContext | null = null;
+
   constructor(private llm: LLMProvider) {}
+
+  setExistingContext(context: ExistingContext): void {
+    this.existingContext = context;
+  }
 
   async analyzeRoughSpecs(inputs: RoughInput[]): Promise<PrepareAnalysis> {
     if (inputs.length === 0) {
@@ -25,9 +37,49 @@ export class SpecAnalyzer {
       `=== File: ${input.filePath} ===\n${input.content}\n`
     ).join('\n');
 
+    // Build existing context summary to avoid duplicates and enable cross-referencing
+    let existingContextSection = '';
+    if (this.existingContext) {
+      const { businessReqs, contracts, schemas } = this.existingContext;
+      if (businessReqs.length > 0 || contracts.length > 0 || schemas.length > 0) {
+        existingContextSection = `\n\n=== EXISTING SPECIFICATIONS (already prepared — DO NOT recreate these) ===\n`;
+        
+        if (businessReqs.length > 0) {
+          existingContextSection += `\n--- Existing Business Requirements ---\n`;
+          existingContextSection += businessReqs.map(r => 
+            `File: ${r.filePath}\n${r.content}\n`
+          ).join('\n---\n');
+        }
+        
+        if (contracts.length > 0) {
+          existingContextSection += `\n--- Existing API Contracts ---\n`;
+          existingContextSection += contracts.map(c => 
+            `File: ${c.filePath}\n${c.content}\n`
+          ).join('\n---\n');
+        }
+        
+        if (schemas.length > 0) {
+          existingContextSection += `\n--- Existing Schemas ---\n`;
+          existingContextSection += schemas.map(s => 
+            `File: ${s.filePath}\n${s.content}\n`
+          ).join('\n---\n');
+        }
+
+        existingContextSection += `\n=== END EXISTING SPECIFICATIONS ===\n`;
+      }
+    }
+
     const userPrompt = `Please analyze these rough specifications and suggest a professional structure:
 
 ${combinedContent}
+${existingContextSection}
+
+CRITICAL RULES:
+1. DO NOT create duplicate specs for endpoints/features that already exist in the "EXISTING SPECIFICATIONS" section above.
+2. If a rough input describes something that overlaps with an existing spec, suggest UPDATING the existing spec instead of creating a new one.
+3. Cross-reference new specs with existing ones (e.g., if an existing auth spec exists, new order specs should reference it for authentication).
+4. Reuse existing IDs, domains, and naming conventions from the existing specs.
+5. If existing schemas exist, extend them rather than creating conflicting new ones.
 
 Provide a detailed analysis that will help transform these rough ideas into production-ready API specifications.`;
 

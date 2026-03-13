@@ -111,6 +111,45 @@ export class SpecScanner {
     }
   }
 
+  /**
+   * Scan for existing professional specs (already prepared .req.md and .contract.md files).
+   * Used to provide context when preparing new specs — avoids duplicates and enables cross-referencing.
+   */
+  async scanExistingSpecs(): Promise<{ businessReqs: RoughInput[]; contracts: RoughInput[]; schemas: RoughInput[] }> {
+    const businessReqs: RoughInput[] = [];
+    const contracts: RoughInput[] = [];
+    const schemas: RoughInput[] = [];
+
+    // Scan business requirements
+    const reqFiles = await glob(join(this.baseDir, 'business/**/*.req.md'), { ignore: ['**/node_modules/**'] }).catch(() => []);
+    for (const filePath of reqFiles) {
+      if (existsSync(filePath) && statSync(filePath).isFile()) {
+        const content = readFileSync(filePath, 'utf-8');
+        businessReqs.push({ filePath: relative(process.cwd(), filePath), content: content.trim(), type: 'partial' });
+      }
+    }
+
+    // Scan API contracts
+    const contractFiles = await glob(join(this.baseDir, 'technical/**/*.contract.md'), { ignore: ['**/node_modules/**'] }).catch(() => []);
+    for (const filePath of contractFiles) {
+      if (existsSync(filePath) && statSync(filePath).isFile()) {
+        const content = readFileSync(filePath, 'utf-8');
+        contracts.push({ filePath: relative(process.cwd(), filePath), content: content.trim(), type: 'partial' });
+      }
+    }
+
+    // Scan schemas
+    const schemaFiles = await glob(join(this.baseDir, 'schemas/**/*.json'), { ignore: ['**/node_modules/**'] }).catch(() => []);
+    for (const filePath of schemaFiles) {
+      if (existsSync(filePath) && statSync(filePath).isFile()) {
+        const content = readFileSync(filePath, 'utf-8');
+        schemas.push({ filePath: relative(process.cwd(), filePath), content: content.trim(), type: 'partial' });
+      }
+    }
+
+    return { businessReqs, contracts, schemas };
+  }
+
   removePrepareState(): void {
     const stateFile = join(this.baseDir, '.specflow-prepared');
     

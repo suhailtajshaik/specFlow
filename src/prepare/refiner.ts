@@ -1,5 +1,6 @@
-import type { PrepareAnalysis, PrepareAnswers, BusinessRequirement, ApiContract, JsonSchema } from '../parser/types.js';
+import type { PrepareAnalysis, PrepareAnswers, BusinessRequirement, ApiContract, JsonSchema, RoughInput } from '../parser/types.js';
 import type { LLMProvider } from '../llm/provider.js';
+import type { ExistingContext } from './analyzer.js';
 import { PREPARE_REFINE_PROMPT } from '../llm/prompts/prepare-analyze.js';
 
 export interface RefinedSpecs {
@@ -9,7 +10,13 @@ export interface RefinedSpecs {
 }
 
 export class SpecRefiner {
+  private existingContext: ExistingContext | null = null;
+
   constructor(private llm: LLMProvider) {}
+
+  setExistingContext(context: ExistingContext): void {
+    this.existingContext = context;
+  }
 
   async refineSpecs(
     analysis: PrepareAnalysis, 
@@ -43,6 +50,34 @@ export class SpecRefiner {
       .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
       .join('\n');
 
+    // Build existing context for the refiner
+    let existingContextSection = '';
+    if (this.existingContext) {
+      const { businessReqs, contracts, schemas } = this.existingContext;
+      if (businessReqs.length > 0 || contracts.length > 0 || schemas.length > 0) {
+        existingContextSection = `\n\nEXISTING SPECIFICATIONS (already prepared — use as reference, do NOT recreate):\n`;
+        
+        if (businessReqs.length > 0) {
+          existingContextSection += `\nExisting Business Requirements:\n`;
+          existingContextSection += businessReqs.map(r => `- ${r.filePath}`).join('\n');
+          existingContextSection += '\n\nExisting requirement details:\n';
+          existingContextSection += businessReqs.map(r => `=== ${r.filePath} ===\n${r.content}`).join('\n\n');
+        }
+        
+        if (contracts.length > 0) {
+          existingContextSection += `\n\nExisting API Contracts:\n`;
+          existingContextSection += contracts.map(c => `- ${c.filePath}`).join('\n');
+          existingContextSection += '\n\nExisting contract details:\n';
+          existingContextSection += contracts.map(c => `=== ${c.filePath} ===\n${c.content}`).join('\n\n');
+        }
+        
+        if (schemas.length > 0) {
+          existingContextSection += `\n\nExisting Schemas:\n`;
+          existingContextSection += schemas.map(s => `- ${s.filePath}`).join('\n');
+        }
+      }
+    }
+
     return `Transform these rough specifications into professional requirements and contracts.
 
 ORIGINAL ROUGH INPUT:
@@ -53,6 +88,15 @@ ${analysisJson}
 
 USER ANSWERS TO QUESTIONS:
 ${answersText}
+${existingContextSection}
+
+CRITICAL RULES:
+1. DO NOT generate specs for endpoints/features that already exist in the "EXISTING SPECIFICATIONS" section.
+2. If a rough input overlaps with an existing spec, generate ONLY the new/different parts.
+3. Cross-reference new specs with existing ones (use related_requirement IDs, reference existing schemas).
+4. Follow the same naming conventions, ID patterns, and domain structure as existing specs.
+5. Reuse and extend existing schemas — do NOT create conflicting new schemas for the same entities.
+6. New business rule IDs should continue from existing numbering (e.g., if BR-7 exists, start from BR-8).
 
 Generate complete, professional specification files with:
 - Proper YAML frontmatter

@@ -40,8 +40,28 @@ export async function prepareCommand(options: PrepareOptions = {}) {
     const refiner = new SpecRefiner(llm);
     const writer = new SpecWriter(config.requirements.directory);
 
+    // Step 0: Scan existing professional specs for context
+    Logger.step(1, 5, 'Scanning for existing specifications...');
+    const existingContext = await scanner.scanExistingSpecs();
+    const existingCount = existingContext.businessReqs.length + existingContext.contracts.length + existingContext.schemas.length;
+    
+    if (existingCount > 0) {
+      Logger.success(`Found ${existingCount} existing spec(s) — will use as context to avoid duplicates:`);
+      if (existingContext.businessReqs.length > 0) {
+        Logger.list(existingContext.businessReqs.map(r => `📄 ${r.filePath}`));
+      }
+      if (existingContext.contracts.length > 0) {
+        Logger.list(existingContext.contracts.map(c => `🔌 ${c.filePath}`));
+      }
+      if (existingContext.schemas.length > 0) {
+        Logger.list(existingContext.schemas.map(s => `📦 ${s.filePath}`));
+      }
+    } else {
+      Logger.info('No existing specs found — starting fresh');
+    }
+
     // Step 1: Scan for rough specifications
-    Logger.step(1, 4, 'Scanning for rough specifications...');
+    Logger.step(2, 5, 'Scanning for rough specifications...');
     const roughInputs = await scanner.scanForRoughSpecs();
 
     if (roughInputs.length === 0) {
@@ -55,8 +75,14 @@ export async function prepareCommand(options: PrepareOptions = {}) {
     Logger.success(`Found ${roughInputs.length} specification file(s):`);
     Logger.list(roughInputs.map(input => `${input.filePath} (${input.type})`));
 
-    // Step 2: Analyze specifications  
-    const analysis = await Spinner.withSpinner('Analyzing specifications with AI...', async (spinner) => {
+    // Provide existing context to analyzer and refiner
+    if (existingCount > 0) {
+      analyzer.setExistingContext(existingContext);
+      refiner.setExistingContext(existingContext);
+    }
+
+    // Step 3: Analyze specifications  
+    const analysis = await Spinner.withSpinner('Analyzing specifications with AI (considering existing context)...', async (spinner) => {
       const result = await analyzer.analyzeRoughSpecs(roughInputs);
       
       spinner.updateText('Analysis complete');
@@ -70,8 +96,8 @@ export async function prepareCommand(options: PrepareOptions = {}) {
       Logger.list(analysis.warnings);
     }
 
-    // Step 3: Ask clarifying questions (unless auto mode)
-    Logger.step(2, 4, 'Gathering additional information...');
+    // Step 4: Ask clarifying questions (unless auto mode)
+    Logger.step(3, 5, 'Gathering additional information...');
     
     let answers = {};
     if (!options.auto && analysis.questions.length > 0) {
@@ -88,7 +114,7 @@ export async function prepareCommand(options: PrepareOptions = {}) {
       Logger.info('No clarifying questions needed');
     }
 
-    // Step 4: Refine specifications
+    // Step 4.5: Refine specifications
     const refinedSpecs = await Spinner.withSpinner('Generating professional specifications...', async (spinner) => {
       const result = await refiner.refineSpecs(analysis, answers);
       
@@ -120,7 +146,7 @@ export async function prepareCommand(options: PrepareOptions = {}) {
     }
 
     // Step 5: Write refined specifications
-    Logger.step(3, 4, 'Writing specification files...');
+    Logger.step(4, 5, 'Writing specification files...');
     const writtenFiles = await writer.writeRefinedSpecs(refinedSpecs);
 
     // Update prepare state
@@ -131,7 +157,7 @@ export async function prepareCommand(options: PrepareOptions = {}) {
     Logger.list(writtenFiles.map(f => f.replace(process.cwd() + '/', '')));
 
     // Step 6: Show next steps
-    Logger.step(4, 4, 'Ready for code generation');
+    Logger.step(5, 5, 'Ready for code generation');
     Logger.divider();
     Logger.header('Review & Next Steps');
     
