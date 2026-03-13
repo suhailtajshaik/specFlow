@@ -400,7 +400,8 @@ export class GeneratorEngine {
         const routePath = this.generateRoutePath(contract).replace('src/', './').replace('.ts', '.js');
         
         imports.push(`import ${routeName} from '${routePath}';`);
-        routes.push(`app.route('${contract.path.split('/')[1] || ''}', ${routeName});`);
+        const basePath = '/' + (contract.path.split('/').filter(Boolean)[0] || '');
+        routes.push(`app.route('${basePath}', ${routeName});`);
       }
     }
 
@@ -495,13 +496,15 @@ export default {
 
   private generateRoutePath(contract: TechnicalContract): string {
     const pathSegments = contract.path.split('/').filter(s => s && !s.startsWith(':') && !s.startsWith('{'));
-    const filename = `${contract.method.toLowerCase()}-${pathSegments[pathSegments.length - 1] || 'root'}.ts`;
+    // Sanitize segments — replace special chars with hyphens for file paths
+    const sanitized = pathSegments.map(s => s.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase());
+    const filename = `${contract.method.toLowerCase()}-${sanitized[sanitized.length - 1] || 'root'}.ts`;
     
-    if (pathSegments.length <= 1) {
+    if (sanitized.length <= 1) {
       return `src/routes/${filename}`;
     }
     
-    return `src/routes/${pathSegments.slice(1).join('/')}/${filename}`;
+    return `src/routes/${sanitized.slice(0, -1).join('/')}/${filename}`;
   }
 
   private generateTestPath(contract: TechnicalContract): string {
@@ -517,8 +520,17 @@ export default {
       return `${method}Root`;
     }
     
+    // Convert path parts to valid camelCase identifier (handle hyphens, special chars)
     const camelCase = pathParts.slice(1)
-      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .map(part => {
+        // Replace hyphens and non-alphanumeric with space, then capitalize each word
+        return part
+          .replace(/[^a-zA-Z0-9]/g, ' ')
+          .split(' ')
+          .filter(Boolean)
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join('');
+      })
       .join('');
     
     return `${method}${camelCase}`;
